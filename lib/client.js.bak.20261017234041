@@ -1,0 +1,94 @@
+window.__ModuleLoader__.load({
+  id: "dsh-patch-opencode-display",
+  factory: (require) => {
+    var module = { exports: {} };
+    var exports = module.exports;
+    Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+
+    const STYLE_ID = "dsh-patch-opencode-display-style";
+    // 隐藏 Go· 品牌，零额外右边距：display:none 完全脱离布局，不留 gap
+    // 用 [class*="_brand"] 命中 dsh-opencode-go 的 hashed 品牌类（mAjYhq_brand 等随版本变）
+    const CSS = '[class*="_brand"]{display:none!important}';
+
+    function injectStyle() {
+      if (!document.head) return;
+      let el = document.getElementById(STYLE_ID);
+      if (!el) {
+        el = document.createElement("style");
+        el.id = STYLE_ID;
+        document.head.appendChild(el);
+      }
+      if (el.textContent !== CSS) el.textContent = CSS;
+    }
+
+    function patchText(root = document) {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let n;
+      while ((n = walker.nextNode())) {
+        const v = n.nodeValue;
+        if (!v) continue;
+        if (v.includes("5小时") || v.includes("5 小时")) {
+          n.nodeValue = v.replaceAll("5 小时", "5h").replaceAll("5小时", "5h");
+        }
+        if (v.includes("Go · 5h") || v.includes("Go·5h")) {
+          n.nodeValue = v.replaceAll("Go · ", "").replaceAll("Go·", "");
+        }
+      }
+      root.querySelectorAll && root.querySelectorAll('[aria-label*="Go"],[title*="Go"]').forEach(el => {
+        if (el.getAttribute("aria-label")?.includes("Go")) {
+          el.setAttribute("aria-label", el.getAttribute("aria-label").replaceAll("Go · ", "").replaceAll("Go·", ""));
+        }
+        if (el.getAttribute("title")?.includes("Go")) {
+          el.setAttribute("title", el.getAttribute("title").replaceAll("Go · ", "").replaceAll("Go·", ""));
+        }
+      });
+    }
+
+    function startObserver() {
+      injectStyle();
+      patchText(document);
+      const obs = new MutationObserver((muts) => {
+        for (const m of muts) {
+          if (m.type === "childList") {
+            m.addedNodes.forEach(n => {
+              if (n.nodeType === 1) patchText(n);
+              else if (n.nodeType === 3 && n.nodeValue && (n.nodeValue.includes("5小时") || n.nodeValue.includes("Go"))) patchText(document);
+            });
+            if (m.target && m.target.getAttribute) patchText(m.target);
+          }
+          if (m.type === "characterData" && m.target.nodeValue && (m.target.nodeValue.includes("5小时") || m.target.nodeValue.includes("Go ·"))) {
+            patchText(document);
+          }
+          if (m.type === "attributes" && (m.attributeName === "aria-label" || m.attributeName === "title")) {
+            patchText(m.target);
+          }
+        }
+      });
+      obs.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ["aria-label", "title"]
+      });
+    }
+
+    exports.apply = function(ctx) {
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", startObserver);
+      } else {
+        startObserver();
+      }
+      let tries = 0;
+      const timer = setInterval(() => {
+        injectStyle();
+        patchText(document);
+        if (++tries > 30) clearInterval(timer);
+      }, 500);
+      setTimeout(() => clearInterval(timer), 16000);
+    };
+
+    exports.name = "dsh-patch-opencode-display";
+    return module.exports;
+  }
+});

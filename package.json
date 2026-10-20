@@ -1,0 +1,23 @@
+{
+  "name": "dsh-patch-opencode-display",
+  "version": "0.2.0",
+  "description": "Opencode pill 显示修正：5小时→5h，隐藏 Go· 前缀，并搬到 composer 下方状态行。零上游改动，更新安全。",
+  "type": "module",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js"
+  ]
+}
