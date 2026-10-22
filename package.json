@@ -1,7 +1,7 @@
 {
   "name": "dsh-patch-opencode-display",
-  "version": "0.2.0",
-  "description": "Opencode pill 显示修正：5小时→5h，隐藏 Go· 前缀，并搬到 composer 下方状态行。零上游改动，更新安全。",
+  "version": "0.2.1",
+  "description": "Opencode pill 显示修正：5小时→5h，隐藏 Go· 前缀。只作用于 opencode-go 的 pill；dsh-commandcode-go 已原生实现同等显示，本补丁会按 aria-label 主动跳过它。零上游改动，更新安全。",
   "type": "module",
   "license": "MIT",
   "main": "./lib/index.js",
